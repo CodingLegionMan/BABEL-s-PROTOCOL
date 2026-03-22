@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BABEL'S PROTOCOL // LEVIATHAN ENGINE</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #020205;
+            --grid: rgba(0, 255, 255, 0.05);
+            --neon-cyan: #00ffff;
+            --neon-magenta: #ff00ff;
+            --surface: rgba(10, 15, 25, 0.85);
+            --text-main: #e0e0e0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg);
+            background-image: 
+                linear-gradient(var(--grid) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+            background-size: 40px 40px;
+            color: var(--text-main);
+            font-family: 'Rajdhani', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 15px;
+            position: relative;
+        }
+
+        body::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1), rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px);
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: var(--neon-cyan); }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 10px rgba(0,255,255,0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--neon-cyan);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .faction-tag { color: var(--neon-magenta); font-size: 1.2rem; }
+
+        button {
+            background: rgba(0, 255, 255, 0.1);
+            color: var(--neon-cyan);
+            border: 1px solid var(--neon-cyan);
+            padding: 8px 12px;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            transition: 0.2s;
+            text-transform: uppercase;
+        }
+        button:hover { background: var(--neon-cyan); color: #000; box-shadow: 0 0 15px var(--neon-cyan); }
+
+        input[type="text"] {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            padding: 8px;
+            font-family: 'Share Tech Mono', monospace;
+            outline: none;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 15px;
+            height: calc(100vh - 80px);
+            z-index: 10;
+        }
+
+        .panel {
+            background: var(--surface);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+        }
+
+        h3 { font-family: 'Orbitron'; color: var(--neon-magenta); margin-bottom: 10px; font-size: 1rem;}
+
+        /* --- RADAR & NETWORK & CARGO --- */
+        #radar-box { position: relative; flex: 1; min-height: 200px; }
+        canvas {
+            width: 100%; height: 100%;
+            background: #000; border-radius: 50%;
+            border: 1px solid var(--neon-cyan);
+            box-shadow: 0 0 30px rgba(0,255,255,0.1) inset;
+        }
+        .network-controls { margin-top: 15px; display: flex; flex-direction: column; gap: 10px; }
+        
+        .cargo-box {
+            background: rgba(0,0,0,0.5);
+            border: 1px dashed var(--neon-magenta);
+            padding: 10px;
+            font-family: 'Share Tech Mono';
+            color: #aaa;
+            margin-top: 10px;
+        }
+        .cargo-item { display: flex; justify-content: space-between; color: var(--neon-cyan); }
+
+        /* --- TERMINAL --- */
+        #terminal {
+            flex: 1; background: #000; border: 1px solid #333;
+            font-family: 'Share Tech Mono', monospace;
+            padding: 15px; overflow-y: auto; margin-bottom: 10px;
+            text-shadow: 0 0 5px rgba(255,255,255,0.3);
+        }
+        .msg-sys { color: #555; margin-bottom: 5px;}
+        .msg-local { color: var(--neon-cyan); margin-bottom: 5px;}
+        .msg-foreign { color: var(--neon-magenta); margin-bottom: 5px;}
+        .msg-ghost { color: #ffaa00; margin-bottom: 5px;}
+        
+        .alien-word {
+            cursor: pointer; border-bottom: 1px dashed var(--neon-magenta); transition: 0.2s;
+            padding: 0 2px;
+        }
+        .alien-word:hover { background: rgba(255,0,255,0.3); color: #fff; box-shadow: 0 0 10px var(--neon-magenta);}
+        .translated { color: var(--neon-cyan); border-bottom-color: var(--neon-cyan); }
+        .danger-word { color: #ff3333; font-weight: bold; text-shadow: 0 0 8px #ff3333; }
+        .corrupted { background: #333; color: #000; user-select: none; }
+
+        .descramble { opacity: 0; animation: fade-in 0.1s forwards; }
+        @keyframes fade-in { to { opacity: 1; } }
+
+        /* --- TRANSMITTER --- */
+        #transmitter { height: 120px; border: 1px solid #333; padding: 10px; background: rgba(0,0,0,0.5); }
+        .concept-bank { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+        .concept-btn { font-size: 0.8rem; padding: 4px 8px; border-color: #555; color: #aaa;}
+        .concept-btn:hover { border-color: var(--neon-cyan); color: var(--neon-cyan); }
+        #draft-message { font-family: 'Share Tech Mono'; color: var(--neon-cyan); margin-bottom: 10px; min-height: 20px;}
+
+        /* --- NEW: OVERHAULED DICTIONARY SIDEBAR --- */
+        #dict-progress { font-family: 'Orbitron'; color: var(--neon-cyan); font-size: 0.8rem; margin-bottom: 10px; text-align: right;}
+        #dict-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .dict-log-entry {
+            background: rgba(0,255,255,0.05); border-left: 3px solid var(--neon-cyan);
+            padding: 8px; font-family: 'Share Tech Mono'; font-size: 0.9rem;
+            display: flex; justify-content: space-between;
+        }
+        .dict-log-alien { color: var(--neon-magenta); }
+        .dict-log-english { color: #fff; font-weight: bold;}
+
+        /* --- NEW: HEX-DECODER HUD --- */
+        #decoder-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.8); z-index: 1001; display: none;
+            justify-content: center; align-items: center;
+        }
+        #decoder-modal {
+            background: var(--surface); border: 2px solid var(--neon-magenta);
+            padding: 20px; box-shadow: 0 0 40px rgba(255,0,255,0.3);
+            width: 400px; text-align: center;
+        }
+        .decoder-target { font-family: 'Orbitron'; font-size: 2rem; color: var(--neon-magenta); margin: 15px 0; text-shadow: 0 0 10px var(--neon-magenta);}
+        .decoder-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;}
+        .decode-btn { border-color: #555; color: #ccc; }
+        .decode-btn:hover { border-color: var(--neon-magenta); background: rgba(255,0,255,0.2); color: #fff;}
+        .decoder-close { border-color: #ff3333; color: #ff3333; width: 100%;}
+
+        /* --- SYS-OP BOT --- */
+        #tutorial-bot {
+            position: fixed; bottom: 25px; right: 25px; width: 320px;
+            background: rgba(10, 15, 25, 0.95); border: 1px solid var(--neon-cyan); border-left: 5px solid var(--neon-cyan);
+            padding: 15px; box-shadow: 0 0 30px rgba(0,255,255,0.2); z-index: 1000;
+            display: none; flex-direction: column; gap: 15px;
+        }
+        .bot-header { font-family: 'Orbitron'; color: var(--neon-cyan); font-size: 0.9rem; display: flex; justify-content: space-between; font-weight: bold;}
+        .bot-text { font-family: 'Share Tech Mono'; color: #ccc; font-size: 0.9rem; min-height: 70px; line-height: 1.4;}
+        .bot-controls { display: flex; justify-content: space-between; gap: 10px; }
+        .bot-btn { font-size: 0.75rem; padding: 6px 10px; flex: 1; text-align: center; }
+
+    </style>
+</head>
+<body>
+
+    <h1>
+        <span>BABEL'S PROTOCOL <span class="faction-tag" id="my-faction-name"></span></span>
+        <div>
+            <button onclick="startTutorial()" style="border-color: #00ffaa; color: #00ffaa; margin-right: 15px;">SYS-GUIDE</button>
+            <button onclick="wipeUniverse()" style="border-color: #ff3333; color: #ff3333;">Wipe Universe</button>
+        </div>
+    </h1>
+
+    <div class="dashboard">
+        <div class="panel">
+            <h3>SECTOR RADAR</h3>
+            <div id="radar-box"><canvas id="radar"></canvas></div>
+            <div class="cargo-box">
+                <div style="font-size: 0.8rem; margin-bottom: 5px; color: #555;">PHYSICAL CARGO HOLD</div>
+                <div class="cargo-item">IRON: <span id="cargo-iron">0</span></div>
+                <div class="cargo-item">GOLD: <span id="cargo-gold">0</span></div>
+            </div>
+            <div class="network-controls">
+                <div style="font-size: 0.8rem; color: #888;">YOUR SECTOR ID:</div>
+                <input type="text" id="my-id" readonly onclick="this.select(); document.execCommand('copy'); alert('ID Copied!');" style="cursor: pointer;" value="Initializing...">
+                <div style="font-size: 0.8rem; color: #888; margin-top: 10px;">TARGET SECTOR ID:</div>
+                <input type="text" id="target-id" placeholder="Paste ID here...">
+                <button onclick="connectToPeer()">Initiate Jump</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3>SUB-SPACE TERMINAL</h3>
+            <div id="terminal"><div class="msg-sys">System: Awaiting localized connections...</div></div>
+            <h3 style="margin-top: 10px;">TRANSMITTER (Select Concepts)</h3>
+            <div id="transmitter">
+                <div class="concept-bank" id="concept-bank"></div>
+                <div id="draft-message">_</div>
+                <button onclick="transmitMessage()">Broadcast Data</button>
+                <button onclick="clearDraft()" style="border-color: #555; color: #aaa;">Clear</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3>ROSETTA DATABANKS</h3>
+            <div style="font-size: 0.8rem; color: #888; margin-bottom: 5px;">Confirmed Decryptions:</div>
+            <div id="dict-progress">0 / 12 DECODED</div>
+            <div id="dict-list">
+                </div>
+        </div>
+    </div>
+
+    <div id="decoder-overlay">
+        <div id="decoder-modal">
+            <h3 style="color: #fff;">HEX-DECODER MATRIX</h3>
+            <div style="color: #888; font-size: 0.8rem; font-family: 'Share Tech Mono';">SELECT MATCHING CONCEPT TO DECRYPT:</div>
+            <div class="decoder-target" id="decoder-target-word">???</div>
+            <div class="decoder-grid" id="decoder-grid">
+                </div>
+            <button class="decoder-close" onclick="closeDecoder()">CANCEL DECRYPTION</button>
+        </div>
+    </div>
+
+    <div id="tutorial-bot">
+        <div class="bot-header"><span>🤖 SYS-OP // GUIDE</span><span style="cursor:pointer; color: #555;" onclick="closeTutorial()">[X]</span></div>
+        <div class="bot-text" id="bot-text">Initializing...</div>
+        <div class="bot-controls">
+            <button class="bot-btn" style="border-color: #555; color: #aaa;" onclick="prevTutorial()">BACK</button>
+            <button class="bot-btn" id="bot-next-btn" onclick="nextTutorial()">NEXT</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CORE GAME CONCEPTS ---
+        const UNIVERSAL_CONCEPTS = ["hello", "trade", "give", "iron", "gold", "danger", "peace", "yes", "no", "need", "coordinates", "enemy"];
+        const SYLLABLES = ["ka", "zo", "ra", "mi", "lux", "vor", "jin", "xel", "thu", "vek", "shi", "cra", "zyl"];
+        const FACTION_PREFIXES = ["Void", "Nebula", "Star", "Iron", "Quantum", "Echo"];
+        const FACTION_SUFFIXES = ["Syndicate", "Collective", "Empire", "Nomads", "Order"];
+
+        // --- LOCAL STORAGE STATE ---
+        let playerState = {
+            peerId: null,
+            factionName: "",
+            nativeLanguage: {},    
+            knownForeignWords: [], 
+            dictionary: {},
+            inventory: { iron: 100, gold: 50 }, 
+            grammarRule: 0, 
+            tutorialDone: false 
+        };
+
+        let peer, connections = [], draftConcepts = []; 
+        let wordBeingDecoded = ""; // Tracks which word the HUD is open for
+
+        // --- SYS-OP TUTORIAL LOGIC ---
+        const tutorialSteps = [
+            "Welcome Commander. I am SYS-OP. I will guide you through the Babel Protocol interface. Click NEXT to proceed.",
+            "SECTOR RADAR: Your Sector ID is your unique address. Paste an ally's ID into the TARGET box to link terminals.",
+            "DEEP SPACE INTERCEPTS: Even if alone, the radar picks up Ghost Factions every 45 seconds to give you decoding practice.",
+            "ROSETTA DATABANKS: This is the core. When a foreign alien word appears in the terminal, **CLICK IT**. The Hex-Decoder HUD will open. Select what you think the word means.",
+            "TRANSMITTER: To speak, click English concepts. The engine translates it into your generated native language before broadcasting.",
+            "PHYSICAL CARGO: If you transmit 'GIVE' and 'IRON', the system physically deducts 10 Iron from your cargo and beams it to your ally. Good luck."
+        ];
+        let currentTutorialStep = 0;
+
+        function startTutorial() {
+            currentTutorialStep = 0;
+            document.getElementById('tutorial-bot').style.display = 'flex';
+            renderTutorialStep();
+        }
+        function closeTutorial() {
+            document.getElementById('tutorial-bot').style.display = 'none';
+            if (!playerState.tutorialDone) { playerState.tutorialDone = true; saveState(); }
+        }
+        function renderTutorialStep() {
+            const textContainer = document.getElementById('bot-text');
+            textContainer.innerHTML = '';
+            typeWriterDescramble(textContainer, tutorialSteps[currentTutorialStep]);
+            document.getElementById('bot-next-btn').innerText = (currentTutorialStep === tutorialSteps.length - 1) ? "FINISH" : "NEXT";
+        }
+        function nextTutorial() { if (currentTutorialStep < tutorialSteps.length - 1) { currentTutorialStep++; renderTutorialStep(); } else { closeTutorial(); } }
+        function prevTutorial() { if (currentTutorialStep > 0) { currentTutorialStep--; renderTutorialStep(); } }
+
+        // --- INITIALIZATION ---
+        function generateRandomString(len) { return Math.random().toString(36).substring(2, len+2); }
+        
+        function generateNativeLanguage() {
+            let lang = {};
+            UNIVERSAL_CONCEPTS.forEach(concept => {
+                let word;
+                do {
+                    word = SYLLABLES[Math.floor(Math.random() * SYLLABLES.length)] + 
+                           SYLLABLES[Math.floor(Math.random() * SYLLABLES.length)];
+                } while (Object.values(lang).includes(word));
+                lang[concept] = word;
+            });
+            return lang;
+        }
+
+        function loadOrInitializeSave() {
+            const saved = localStorage.getItem('babelLeviathanSaveV2');
+            let isNewPlayer = false;
+            
+            if (saved) {
+                playerState = { ...playerState, ...JSON.parse(saved) }; 
+            } else {
+                isNewPlayer = true;
+                playerState.peerId = "sec-" + generateRandomString(6);
+                playerState.factionName = FACTION_PREFIXES[Math.floor(Math.random()*FACTION_PREFIXES.length)] + " " + FACTION_SUFFIXES[Math.floor(Math.random()*FACTION_SUFFIXES.length)];
+                playerState.nativeLanguage = generateNativeLanguage();
+                playerState.grammarRule = Math.floor(Math.random() * 3); 
+                saveState();
+            }
+            
+            document.getElementById('my-faction-name').innerText = `[${playerState.factionName}]`;
+            document.getElementById('my-id').value = playerState.peerId;
+            updateCargoUI();
+            buildConceptBank();
+            buildDecoderGrid();
+            renderDictionaryLog();
+            
+            setInterval(generateGhostIntercept, 45000); 
+
+            if (isNewPlayer || !playerState.tutorialDone) setTimeout(startTutorial, 1000);
+        }
+
+        function saveState() { localStorage.setItem('babelLeviathanSaveV2', JSON.stringify(playerState)); }
+
+        function wipeUniverse() {
+            if(confirm("CRITICAL WARNING: This will permanently delete your Faction, Language, and Translations. Proceed?")) {
+                localStorage.removeItem('babelLeviathanSaveV2');
+                location.reload();
+            }
+        }
+
+        function updateCargoUI() {
+            document.getElementById('cargo-iron').innerText = playerState.inventory.iron;
+            document.getElementById('cargo-gold').innerText = playerState.inventory.gold;
+        }
+
+        // --- PEER JS NETWORKING ---
+        function initNetwork() {
+            peer = new Peer(playerState.peerId);
+            peer.on('open', id => logSys(`Sector ID active. Frequency ${id}`));
+            peer.on('connection', setupConnection);
+            peer.on('error', err => logSys(`NETWORK ERROR: ${err.type}`));
+        }
+
+        function connectToPeer() {
+            const targetId = document.getElementById('target-id').value.trim();
+            if(!targetId || targetId === playerState.peerId) return;
+            logSys(`Initiating jump to Sector ${targetId}...`);
+            const conn = peer.connect(targetId);
+            setupConnection(conn);
+        }
+
+        function setupConnection(conn) {
+            conn.on('open', () => {
+                connections.push(conn);
+                logSys(`Link established. Requesting telemetry...`);
+                conn.send({ type: 'handshake', faction: playerState.factionName });
+            });
+            conn.on('data', data => {
+                if(data.type === 'handshake') logSys(`Telemetry: Sector belongs to [${data.faction}].`);
+                if(data.type === 'message') handleIncomingTransmission(data.faction, data.words, 'msg-foreign', data.grammarRule, data.transfers);
+            });
+            conn.on('close', () => { connections = connections.filter(c => c.peer !== conn.peer); logSys(`Connection lost.`); });
+        }
+
+        // --- MESSAGING SYSTEM ---
+        function buildConceptBank() {
+            const bank = document.getElementById('concept-bank');
+            UNIVERSAL_CONCEPTS.forEach(concept => {
+                const btn = document.createElement('button');
+                btn.className = 'concept-btn';
+                btn.innerText = concept.toUpperCase();
+                btn.onclick = () => { draftConcepts.push(concept); updateDraftUI(); };
+                bank.appendChild(btn);
+            });
+        }
+
+        function updateDraftUI() { document.getElementById('draft-message').innerText = draftConcepts.length > 0 ? draftConcepts.join(" ") : "_"; }
+        function clearDraft() { draftConcepts = []; updateDraftUI(); }
+
+        function transmitMessage() {
+            if(draftConcepts.length === 0 || connections.length === 0) return;
+            let transfers = { iron: 0, gold: 0 };
+            
+            if(draftConcepts.includes("give") && draftConcepts.includes("iron")) {
+                if(playerState.inventory.iron >= 10) { playerState.inventory.iron -= 10; transfers.iron = 10; }
+                else { logSys("ERROR: Insufficient Iron for transfer."); clearDraft(); return; }
+            }
+            if(draftConcepts.includes("give") && draftConcepts.includes("gold")) {
+                if(playerState.inventory.gold >= 5) { playerState.inventory.gold -= 5; transfers.gold = 5; }
+                else { logSys("ERROR: Insufficient Gold for transfer."); clearDraft(); return; }
+            }
+
+            let alienPayload = draftConcepts.map(c => {
+                let word = playerState.nativeLanguage[c];
+                if(c === "danger") word = word.toUpperCase() + "!";
+                return word;
+            });
+            
+            if(playerState.grammarRule === 1) alienPayload.reverse(); 
+            if(playerState.grammarRule === 2) alienPayload = alienPayload.map(w => w.includes("!") ? w : `${w}-${w}`); 
+
+            connections.forEach(conn => conn.send({ type: 'message', faction: playerState.factionName, words: alienPayload, grammarRule: playerState.grammarRule, transfers: transfers }));
+
+            updateCargoUI();
+            saveState();
+
+            const term = document.getElementById('terminal');
+            term.innerHTML += `<div class="msg-local">[YOU]: ${draftConcepts.join(" ").toUpperCase()}</div>`;
+            term.scrollTop = term.scrollHeight;
+            clearDraft();
+        }
+
+        function typeWriterDescramble(container, htmlString) {
+            const temp = document.createElement('div');
+            temp.innerHTML = htmlString;
+            let delay = 0;
+            Array.from(temp.childNodes).forEach(node => {
+                const wrapper = document.createElement('span');
+                wrapper.className = 'descramble';
+                wrapper.style.animationDelay = `${delay}s`;
+                if (node.nodeType === Node.TEXT_NODE) wrapper.innerText = node.textContent;
+                else wrapper.appendChild(node.cloneNode(true));
+                container.appendChild(wrapper);
+                delay += 0.08; 
+            });
+        }
+
+        function handleIncomingTransmission(senderFaction, alienWords, msgClass, senderGrammar, transfers = null) {
+            let updatedDict = false;
+            alienWords.forEach(word => {
+                const cleanWord = word.replace(/[^a-zA-Z]/g, '').toLowerCase(); 
+                if(cleanWord && !playerState.knownForeignWords.includes(cleanWord)) {
+                    playerState.knownForeignWords.push(cleanWord);
+                    updatedDict = true;
+                }
+            });
+            if(updatedDict) saveState(); 
+
+            if(transfers && (transfers.iron > 0 || transfers.gold > 0)) {
+                if(transfers.iron > 0) playerState.inventory.iron += transfers.iron;
+                if(transfers.gold > 0) playerState.inventory.gold += transfers.gold;
+                updateCargoUI(); saveState();
+                logSys(`[SYS] PHYSICAL TRANSFER RECEIVED: ${transfers.iron} Iron, ${transfers.gold} Gold.`);
+            }
+
+            const term = document.getElementById('terminal');
+            const div = document.createElement('div');
+            div.className = msgClass;
+            
+            let innerHtmlBuilder = `[${senderFaction}]: `;
+            
+            alienWords.forEach(word => {
+                const cleanWord = word.replace(/[^a-zA-Z]/g, '').toLowerCase();
+                const translation = playerState.dictionary[cleanWord];
+                let displayWord = translation ? translation.toUpperCase() : word;
+                
+                let cssClass = translation ? "alien-word translated" : "alien-word";
+                if(word.includes("!") || word === word.toUpperCase()) cssClass += " danger-word"; 
+
+                // NEW: We embed the raw alien word in data-raw for the click-to-decode system
+                innerHtmlBuilder += `<span class="${cssClass}" data-raw="${cleanWord}" onclick="openDecoder('${cleanWord}')">${displayWord}</span> `;
+            });
+
+            typeWriterDescramble(div, innerHtmlBuilder);
+            term.appendChild(div);
+            term.scrollTop = term.scrollHeight;
+        }
+
+        // --- THE OVERHAULED DECODER SYSTEM ---
+        function buildDecoderGrid() {
+            const grid = document.getElementById('decoder-grid');
+            UNIVERSAL_CONCEPTS.forEach(concept => {
+                const btn = document.createElement('button');
+                btn.className = 'decode-btn';
+                btn.innerText = concept.toUpperCase();
+                btn.onclick = () => lockTranslation(concept);
+                grid.appendChild(btn);
+            });
+            // Add an "Unknown" button to clear a guess
+            const clearBtn = document.createElement('button');
+            clearBtn.className = 'decode-btn';
+            clearBtn.style.borderColor = '#ff3333';
+            clearBtn.innerText = "[CLEAR]";
+            clearBtn.onclick = () => lockTranslation(null);
+            grid.appendChild(clearBtn);
+        }
+
+        function openDecoder(rawWord) {
+            wordBeingDecoded = rawWord;
+            document.getElementById('decoder-target-word').innerText = rawWord.toUpperCase();
+            document.getElementById('decoder-overlay').style.display = 'flex';
+        }
+
+        function closeDecoder() {
+            document.getElementById('decoder-overlay').style.display = 'none';
+        }
+
+        function lockTranslation(concept) {
+            if(concept === null) {
+                delete playerState.dictionary[wordBeingDecoded];
+            } else {
+                playerState.dictionary[wordBeingDecoded] = concept;
+            }
+            saveState();
+            closeDecoder();
+            
+            // Seamlessly update the terminal without breaking animations
+            refreshTerminalTranslations();
+            renderDictionaryLog();
+        }
+
+        function refreshTerminalTranslations() {
+            // Find all alien words in the terminal using the hidden data-raw attribute
+            const spans = document.querySelectorAll('.alien-word');
+            spans.forEach(span => {
+                const rawWord = span.getAttribute('data-raw');
+                if(playerState.dictionary[rawWord]) {
+                    span.innerText = playerState.dictionary[rawWord].toUpperCase();
+                    span.classList.add('translated');
+                } else {
+                    span.innerText = rawWord; // revert if cleared
+                    span.classList.remove('translated');
+                }
+            });
+        }
+
+        function renderDictionaryLog() {
+            const list = document.getElementById('dict-list');
+            list.innerHTML = '';
+            
+            let decodedCount = 0;
+            
+            // Show only concepts we have successfully mapped
+            Object.keys(playerState.dictionary).forEach(alienWord => {
+                decodedCount++;
+                const div = document.createElement('div');
+                div.className = 'dict-log-entry';
+                div.innerHTML = `
+                    <span class="dict-log-alien">${alienWord.toUpperCase()}</span>
+                    <span>=></span>
+                    <span class="dict-log-english">${playerState.dictionary[alienWord].toUpperCase()}</span>
+                `;
+                list.appendChild(div);
+            });
+            
+            document.getElementById('dict-progress').innerText = `${decodedCount} / ${UNIVERSAL_CONCEPTS.length} DECODED`;
+        }
+
+        // --- SINGLE PLAYER GHOST INTERCEPTS ---
+        function generateGhostIntercept() {
+            const ghostPrefix = FACTION_PREFIXES[Math.floor(Math.random()*FACTION_PREFIXES.length)];
+            const length = Math.floor(Math.random() * 3) + 2;
+            let words = [];
+            for(let i=0; i<length; i++) {
+                let fakeWord = SYLLABLES[Math.floor(Math.random()*SYLLABLES.length)] + SYLLABLES[Math.floor(Math.random()*SYLLABLES.length)];
+                if(Math.random() < 0.3) words.push("<span class='corrupted'>[ERR_0x99]</span>");
+                else words.push(fakeWord);
+            }
+            handleIncomingTransmission(`GHOST-${ghostPrefix}`, words, 'msg-ghost', 0);
+        }
+
+        function logSys(msg) {
+            const term = document.getElementById('terminal');
+            term.innerHTML += `<div class="msg-sys">${msg}</div>`;
+            term.scrollTop = term.scrollHeight;
+        }
+
+        // --- RADAR ANIMATION ---
+        const canvas = document.getElementById('radar');
+        const ctx = canvas.getContext('2d');
+        let radarAngle = 0;
+
+        function resizeCanvas() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
+        window.addEventListener('resize', resizeCanvas);
+        
+        function drawRadar() {
+            requestAnimationFrame(drawRadar);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const cx = canvas.width / 2; const cy = canvas.height / 2; const radius = Math.min(cx, cy) - 10;
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.2)';
+            ctx.beginPath(); ctx.arc(cx, cy, radius * 0.5, 0, Math.PI*2); ctx.stroke();
+            ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI*2); ctx.stroke();
+            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI*2); ctx.fill();
+
+            connections.forEach((conn, index) => {
+                const angle = (index + 1) * (Math.PI * 2 / (connections.length + 1));
+                const pX = cx + Math.cos(angle) * (radius * 0.6); const pY = cy + Math.sin(angle) * (radius * 0.6);
+                ctx.fillStyle = 'var(--neon-magenta)'; ctx.beginPath(); ctx.arc(pX, pY, 5, 0, Math.PI*2); ctx.fill();
+            });
+
+            radarAngle += 0.03;
+            ctx.strokeStyle = 'var(--neon-cyan)';
+            ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(radarAngle) * radius, cy + Math.sin(radarAngle) * radius); ctx.stroke();
+        }
+
+        // --- BOOT SEQUENCE ---
+        loadOrInitializeSave();
+        initNetwork();
+        setTimeout(resizeCanvas, 100);
+        drawRadar();
+    </script>
+</body>
+</html>
