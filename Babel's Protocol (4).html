@@ -12,6 +12,7 @@
             --grid: rgba(0, 255, 255, 0.05);
             --neon-cyan: #00ffff;
             --neon-magenta: #ff00ff;
+            --neon-alert: #ff3333;
             --surface: rgba(10, 15, 25, 0.85);
             --text-main: #e0e0e0;
         }
@@ -29,18 +30,15 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: hidden; 
             padding: 15px;
             position: relative;
         }
 
         body::after {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 100vw; height: 100vh;
+            content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1), rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px);
-            pointer-events: none;
-            z-index: 999;
+            pointer-events: none; z-index: 999;
         }
 
         ::-webkit-scrollbar { width: 8px; }
@@ -48,145 +46,118 @@
         ::-webkit-scrollbar-thumb { background: var(--neon-cyan); }
 
         h1 {
-            font-family: 'Orbitron', sans-serif;
-            color: var(--neon-cyan);
-            text-shadow: 0 0 10px rgba(0,255,255,0.5);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--neon-cyan);
-            padding-bottom: 10px;
-            margin-bottom: 15px;
+            font-family: 'Orbitron', sans-serif; color: var(--neon-cyan); text-shadow: 0 0 10px rgba(0,255,255,0.5);
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--neon-cyan); padding-bottom: 10px; margin-bottom: 15px;
         }
 
         .faction-tag { color: var(--neon-magenta); font-size: 1.2rem; }
 
         button {
-            background: rgba(0, 255, 255, 0.1);
-            color: var(--neon-cyan);
-            border: 1px solid var(--neon-cyan);
-            padding: 8px 12px;
-            font-family: 'Orbitron', sans-serif;
-            cursor: pointer;
-            transition: 0.2s;
-            text-transform: uppercase;
+            background: rgba(0, 255, 255, 0.1); color: var(--neon-cyan); border: 1px solid var(--neon-cyan);
+            padding: 8px 12px; font-family: 'Orbitron', sans-serif; cursor: pointer; transition: 0.2s; text-transform: uppercase;
         }
         button:hover { background: var(--neon-cyan); color: #000; box-shadow: 0 0 15px var(--neon-cyan); }
+        button:disabled { background: #111; border-color: #333; color: #555; cursor: not-allowed; box-shadow: none; }
 
         input[type="text"] {
-            background: rgba(0,0,0,0.6);
-            border: 1px solid var(--neon-cyan);
-            color: var(--neon-cyan);
-            padding: 8px;
-            font-family: 'Share Tech Mono', monospace;
-            outline: none;
+            background: rgba(0,0,0,0.6); border: 1px solid var(--neon-cyan); color: var(--neon-cyan);
+            padding: 8px; font-family: 'Share Tech Mono', monospace; outline: none;
         }
 
-        .dashboard {
-            display: grid;
-            grid-template-columns: 1fr 2fr 1fr;
-            gap: 15px;
-            height: calc(100vh - 80px);
-            z-index: 10;
-        }
+        /* --- SPA NAVIGATION --- */
+        .spa-nav { display: flex; gap: 10px; margin-bottom: 15px; z-index: 10; flex-shrink: 0; }
+        .nav-btn { flex: 1; font-size: 1rem; border-bottom: 3px solid transparent; }
+        .nav-btn.active { background: rgba(0,255,255,0.2); border-bottom: 3px solid var(--neon-cyan); box-shadow: 0 0 15px rgba(0,255,255,0.2) inset; }
+        .alert-pulse { animation: pulse-alert 1s infinite alternate; border-color: var(--neon-alert); color: var(--neon-alert); }
+        @keyframes pulse-alert { from { box-shadow: 0 0 5px var(--neon-alert); } to { box-shadow: 0 0 20px var(--neon-alert); } }
 
-        .panel {
-            background: var(--surface);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            display: flex;
-            flex-direction: column;
-            padding: 15px;
-        }
-
-        h3 { font-family: 'Orbitron'; color: var(--neon-magenta); margin-bottom: 10px; font-size: 1rem;}
-
-        /* --- RADAR & NETWORK & CARGO --- */
-        #radar-box { position: relative; flex: 1; min-height: 200px; }
-        canvas {
-            width: 100%; height: 100%;
-            background: #000; border-radius: 50%;
-            border: 1px solid var(--neon-cyan);
-            box-shadow: 0 0 30px rgba(0,255,255,0.1) inset;
-        }
-        .network-controls { margin-top: 15px; display: flex; flex-direction: column; gap: 10px; }
+        /* --- SPA VIEWS --- */
+        .spa-view { display: none !important; height: calc(100vh - 120px); min-height: 0; z-index: 10; gap: 15px; }
+        #view-comms.active { display: grid !important; }
+        #view-eng.active, #view-tac.active, #view-fleet.active, #view-chat.active { display: flex !important; flex-direction: column; }
         
-        .cargo-box {
-            background: rgba(0,0,0,0.5);
-            border: 1px dashed var(--neon-magenta);
-            padding: 10px;
-            font-family: 'Share Tech Mono';
-            color: #aaa;
-            margin-top: 10px;
-        }
-        .cargo-item { display: flex; justify-content: space-between; color: var(--neon-cyan); }
+        .dashboard { grid-template-columns: 1fr 2fr 1fr; width: 100%; }
+        .panel { background: var(--surface); backdrop-filter: blur(10px); border: 1px solid rgba(0, 255, 255, 0.2); display: flex; flex-direction: column; padding: 15px; min-height: 0; }
+        h3 { font-family: 'Orbitron'; color: var(--neon-magenta); margin-bottom: 10px; font-size: 1rem; flex-shrink: 0;}
 
-        /* --- TERMINAL --- */
-        #terminal {
-            flex: 1; background: #000; border: 1px solid #333;
-            font-family: 'Share Tech Mono', monospace;
-            padding: 15px; overflow-y: auto; margin-bottom: 10px;
-            text-shadow: 0 0 5px rgba(255,255,255,0.3);
-        }
+        /* --- VIEW 1: COMMS --- */
+        #radar-box { position: relative; flex: 1; min-height: 150px; }
+        canvas { width: 100%; height: 100%; background: #000; border-radius: 50%; border: 1px solid var(--neon-cyan); box-shadow: 0 0 30px rgba(0,255,255,0.1) inset; }
+        .network-controls { margin-top: 15px; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+        .cargo-box { background: rgba(0,0,0,0.5); border: 1px dashed var(--neon-magenta); padding: 10px; font-family: 'Share Tech Mono'; color: #aaa; margin-top: 10px; flex-shrink: 0;}
+        .cargo-item { display: flex; justify-content: space-between; color: var(--neon-cyan); }
+        .cargo-scrap { color: #ffaa00; font-weight: bold; }
+
+        #terminal { flex: 1; background: #000; border: 1px solid #333; font-family: 'Share Tech Mono', monospace; padding: 15px; overflow-y: auto; margin-bottom: 10px; text-shadow: 0 0 5px rgba(255,255,255,0.3); min-height: 0; }
         .msg-sys { color: #555; margin-bottom: 5px;}
         .msg-local { color: var(--neon-cyan); margin-bottom: 5px;}
         .msg-foreign { color: var(--neon-magenta); margin-bottom: 5px;}
         .msg-ghost { color: #ffaa00; margin-bottom: 5px;}
+        .msg-alert { color: var(--neon-alert); margin-bottom: 5px; font-weight: bold; }
         
-        .alien-word {
-            cursor: pointer; border-bottom: 1px dashed var(--neon-magenta); transition: 0.2s;
-            padding: 0 2px;
-        }
+        .alien-word { cursor: pointer; border-bottom: 1px dashed var(--neon-magenta); transition: 0.2s; padding: 0 2px; }
         .alien-word:hover { background: rgba(255,0,255,0.3); color: #fff; box-shadow: 0 0 10px var(--neon-magenta);}
         .translated { color: var(--neon-cyan); border-bottom-color: var(--neon-cyan); }
         .danger-word { color: #ff3333; font-weight: bold; text-shadow: 0 0 8px #ff3333; }
         .corrupted { background: #333; color: #000; user-select: none; }
-
         .descramble { opacity: 0; animation: fade-in 0.1s forwards; }
         @keyframes fade-in { to { opacity: 1; } }
 
-        /* --- TRANSMITTER --- */
-        #transmitter { height: 120px; border: 1px solid #333; padding: 10px; background: rgba(0,0,0,0.5); }
+        #transmitter { height: 120px; border: 1px solid #333; padding: 10px; background: rgba(0,0,0,0.5); flex-shrink: 0;}
         .concept-bank { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
         .concept-btn { font-size: 0.8rem; padding: 4px 8px; border-color: #555; color: #aaa;}
         .concept-btn:hover { border-color: var(--neon-cyan); color: var(--neon-cyan); }
         #draft-message { font-family: 'Share Tech Mono'; color: var(--neon-cyan); margin-bottom: 10px; min-height: 20px;}
 
-        /* --- NEW: OVERHAULED DICTIONARY SIDEBAR --- */
-        #dict-progress { font-family: 'Orbitron'; color: var(--neon-cyan); font-size: 0.8rem; margin-bottom: 10px; text-align: right;}
-        #dict-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-        .dict-log-entry {
-            background: rgba(0,255,255,0.05); border-left: 3px solid var(--neon-cyan);
-            padding: 8px; font-family: 'Share Tech Mono'; font-size: 0.9rem;
-            display: flex; justify-content: space-between;
-        }
+        #dict-progress { font-family: 'Orbitron'; color: var(--neon-cyan); font-size: 0.8rem; margin-bottom: 10px; text-align: right; flex-shrink: 0;}
+        #dict-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; min-height: 0;}
+        .dict-log-entry { background: rgba(0,255,255,0.05); border-left: 3px solid var(--neon-cyan); padding: 8px; font-family: 'Share Tech Mono'; font-size: 0.9rem; display: flex; justify-content: space-between; }
         .dict-log-alien { color: var(--neon-magenta); }
         .dict-log-english { color: #fff; font-weight: bold;}
 
-        /* --- NEW: HEX-DECODER HUD --- */
-        #decoder-overlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.8); z-index: 1001; display: none;
-            justify-content: center; align-items: center;
-        }
-        #decoder-modal {
-            background: var(--surface); border: 2px solid var(--neon-magenta);
-            padding: 20px; box-shadow: 0 0 40px rgba(255,0,255,0.3);
-            width: 400px; text-align: center;
-        }
-        .decoder-target { font-family: 'Orbitron'; font-size: 2rem; color: var(--neon-magenta); margin: 15px 0; text-shadow: 0 0 10px var(--neon-magenta);}
+        /* --- VIEW 4: FLEET COMMAND --- */
+        .fleet-container { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; overflow-y: auto; min-height: 0;}
+        .fleet-stats { border: 1px solid var(--neon-cyan); padding: 20px; background: rgba(0,255,255,0.05); font-family: 'Share Tech Mono'; font-size: 1.2rem; display: flex; flex-direction: column; gap: 15px;}
+        .fleet-yield { font-size: 1.5rem; color: #00ffaa; font-family: 'Orbitron'; text-align: center; border: 1px dashed var(--neon-cyan); padding: 15px;}
+
+        /* --- VIEW 2: ENGINEERING --- */
+        .eng-container { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; overflow-y: auto; min-height: 0;}
+        .ship-stats { border: 1px solid var(--neon-cyan); padding: 20px; background: rgba(0,255,255,0.05); font-family: 'Share Tech Mono'; font-size: 1.2rem;}
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px dashed #333; padding-bottom: 5px;}
+        .crafting-grid { display: flex; flex-direction: column; gap: 15px; overflow-y: auto;}
+        .blueprint { border: 1px solid var(--neon-magenta); padding: 15px; background: rgba(255,0,255,0.05); display: flex; justify-content: space-between; align-items: center;}
+        .bp-details h4 { font-family: 'Orbitron'; color: var(--neon-cyan); margin-bottom: 5px;}
+        .bp-cost { font-family: 'Share Tech Mono'; color: #888; font-size: 0.9rem;}
+
+        /* --- VIEW 3: TACTICAL --- */
+        .tac-container { width: 100%; display: flex; flex-direction: column; gap: 15px; flex: 1; min-height: 0;}
+        .tac-screen { flex: 2; border: 2px solid var(--neon-alert); background: #050000; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; min-height: 250px; }
+        .tac-logs { flex: 1; border: 1px solid #333; background: #000; font-family: 'Share Tech Mono'; padding: 10px; overflow-y: auto; color: #aaa; min-height: 0;}
+        .entity-card { background: rgba(255,51,51,0.1); border: 1px solid var(--neon-alert); padding: 20px; text-align: center; font-family: 'Orbitron'; min-width: 300px; z-index: 2;}
+        .hp-bar-bg { background: #333; height: 20px; width: 100%; margin-top: 10px; border: 1px solid #111; }
+        .hp-bar-fill { background: var(--neon-alert); height: 100%; width: 100%; transition: width 0.3s; }
+        .tac-controls { display: flex; gap: 15px; width: 100%; padding: 0 20px; margin-top: 20px; z-index: 2;}
+        .tac-btn { flex: 1; padding: 20px; font-size: 1.2rem; border-width: 2px;}
+
+        .tac-grid { position: absolute; width: 200%; height: 200%; background: linear-gradient(rgba(255,51,51,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255,51,51,0.2) 1px, transparent 1px); background-size: 50px 50px; transform: perspective(500px) rotateX(60deg); animation: grid-move 5s linear infinite; opacity: 0.3; }
+        @keyframes grid-move { from { transform: perspective(500px) rotateX(60deg) translateY(0); } to { transform: perspective(500px) rotateX(60deg) translateY(50px); } }
+
+        /* --- VIEW 5: ALLIANCE CHAT (NEW) --- */
+        #alliance-chat-box { flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; font-size: 1rem; margin-bottom: 10px; padding-right: 10px;}
+        .ooc-msg { margin-bottom: 8px; word-wrap: break-word; }
+        #peer-list-container { flex: 1; border: 1px solid #333; background: rgba(0,0,0,0.5); padding: 15px; display: flex; flex-direction: column; max-width: 300px; overflow-y: auto;}
+
+        /* --- HEX DECODER & SYS-OP --- */
+        #decoder-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 1001; display: none; justify-content: center; align-items: center; }
+        #decoder-modal { background: var(--surface); border: 2px solid var(--neon-magenta); padding: 20px; box-shadow: 0 0 40px rgba(255,0,255,0.3); width: 400px; text-align: center; }
+        .decoder-target { font-family: 'Orbitron'; font-size: 2rem; color: var(--neon-magenta); margin: 15px 0; text-shadow: 0 0 10px var(--neon-magenta); transition: color 0.3s;}
         .decoder-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;}
         .decode-btn { border-color: #555; color: #ccc; }
         .decode-btn:hover { border-color: var(--neon-magenta); background: rgba(255,0,255,0.2); color: #fff;}
         .decoder-close { border-color: #ff3333; color: #ff3333; width: 100%;}
 
-        /* --- SYS-OP BOT --- */
-        #tutorial-bot {
-            position: fixed; bottom: 25px; right: 25px; width: 320px;
-            background: rgba(10, 15, 25, 0.95); border: 1px solid var(--neon-cyan); border-left: 5px solid var(--neon-cyan);
-            padding: 15px; box-shadow: 0 0 30px rgba(0,255,255,0.2); z-index: 1000;
-            display: none; flex-direction: column; gap: 15px;
-        }
+        #tutorial-bot { position: fixed; bottom: 25px; right: 25px; width: 320px; background: rgba(10, 15, 25, 0.95); border: 1px solid var(--neon-cyan); border-left: 5px solid var(--neon-cyan); padding: 15px; box-shadow: 0 0 30px rgba(0,255,255,0.2); z-index: 1000; display: none; flex-direction: column; gap: 15px; }
         .bot-header { font-family: 'Orbitron'; color: var(--neon-cyan); font-size: 0.9rem; display: flex; justify-content: space-between; font-weight: bold;}
         .bot-text { font-family: 'Share Tech Mono'; color: #ccc; font-size: 0.9rem; min-height: 70px; line-height: 1.4;}
         .bot-controls { display: flex; justify-content: space-between; gap: 10px; }
@@ -200,11 +171,19 @@
         <span>BABEL'S PROTOCOL <span class="faction-tag" id="my-faction-name"></span></span>
         <div>
             <button onclick="startTutorial()" style="border-color: #00ffaa; color: #00ffaa; margin-right: 15px;">SYS-GUIDE</button>
-            <button onclick="wipeUniverse()" style="border-color: #ff3333; color: #ff3333;">Wipe Universe</button>
+            <button onclick="wipeUniverse()" style="border-color: #ff3333; color: #ff3333;">Wipe Save</button>
         </div>
     </h1>
 
-    <div class="dashboard">
+    <div class="spa-nav">
+        <button class="nav-btn active" id="nav-comms" onclick="switchTab('comms')">COMMS / RADAR</button>
+        <button class="nav-btn" id="nav-fleet" onclick="switchTab('fleet')">FLEET COMMAND</button>
+        <button class="nav-btn" id="nav-eng" onclick="switchTab('eng')">ENGINEERING BAY</button>
+        <button class="nav-btn" id="nav-tac" onclick="switchTab('tac')">TACTICAL BAY <span id="alert-badge" style="display:none; color: var(--neon-alert);">[!]</span></button>
+        <button class="nav-btn" id="nav-chat" onclick="switchTab('chat')">ALLIANCE CHAT <span id="chat-badge" style="display:none; color: var(--neon-alert);">[!]</span></button>
+    </div>
+
+    <div id="view-comms" class="spa-view dashboard active">
         <div class="panel">
             <h3>SECTOR RADAR</h3>
             <div id="radar-box"><canvas id="radar"></canvas></div>
@@ -212,6 +191,7 @@
                 <div style="font-size: 0.8rem; margin-bottom: 5px; color: #555;">PHYSICAL CARGO HOLD</div>
                 <div class="cargo-item">IRON: <span id="cargo-iron">0</span></div>
                 <div class="cargo-item">GOLD: <span id="cargo-gold">0</span></div>
+                <div class="cargo-item cargo-scrap">SCRAP: <span id="cargo-scrap">0</span></div>
             </div>
             <div class="network-controls">
                 <div style="font-size: 0.8rem; color: #888;">YOUR SECTOR ID:</div>
@@ -238,8 +218,133 @@
             <h3>ROSETTA DATABANKS</h3>
             <div style="font-size: 0.8rem; color: #888; margin-bottom: 5px;">Confirmed Decryptions:</div>
             <div id="dict-progress">0 / 12 DECODED</div>
-            <div id="dict-list">
+            <div id="dict-list"></div>
+        </div>
+    </div>
+
+    <div id="view-fleet" class="spa-view panel">
+        <h3>FLEET COMMAND // RESOURCE EXTRACTION</h3>
+        <div class="fleet-container">
+            <div class="fleet-stats">
+                <div style="color: var(--neon-magenta); font-family: 'Orbitron'; text-align: center;">MINING FLEET STATUS</div>
+                <div class="stat-row"><span>AUTO-MINERS:</span> <span id="stat-miners" style="color: #00ffaa;">0 ACTIVE</span></div>
+                <div class="stat-row"><span>SOLAR SKIMMERS:</span> <span id="stat-skimmers" style="color: var(--neon-cyan);">0 ACTIVE</span></div>
+                
+                <div class="fleet-yield">
+                    <div>PASSIVE YIELD:</div>
+                    <div style="font-size: 1rem; color: #ccc; margin-top: 10px;">+<span id="yield-iron">0</span> IRON / SEC</div>
+                    <div style="font-size: 1rem; color: #ccc;">+<span id="yield-gold">0</span> GOLD / SEC</div>
                 </div>
+            </div>
+            <div class="crafting-grid">
+                <div class="blueprint">
+                    <div class="bp-details">
+                        <h4>DEPLOY AUTO-MINER</h4>
+                        <div class="bp-cost">Cost: 50 Iron, 10 Scrap</div>
+                        <div style="color: #00ffaa; font-size: 0.8rem;">Yields +1 Iron per second</div>
+                    </div>
+                    <button onclick="buyShip('miner')">DEPLOY</button>
+                </div>
+                <div class="blueprint">
+                    <div class="bp-details">
+                        <h4>DEPLOY SOLAR SKIMMER</h4>
+                        <div class="bp-cost">Cost: 100 Gold, 20 Scrap</div>
+                        <div style="color: var(--neon-cyan); font-size: 0.8rem;">Yields +1 Gold per second</div>
+                    </div>
+                    <button onclick="buyShip('skimmer')">DEPLOY</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-eng" class="spa-view panel">
+        <h3>ENGINEERING BAY // SHIP SCHEMATICS</h3>
+        <div class="eng-container">
+            <div class="ship-stats">
+                <div style="color: var(--neon-magenta); font-family: 'Orbitron'; margin-bottom: 15px; text-align: center;">CURRENT SPECIFICATIONS</div>
+                <div class="stat-row"><span>HULL INTEGRITY:</span> <span id="stat-hp" style="color: #00ffaa;">100 / 100</span></div>
+                <div class="stat-row"><span>SHIELD CAPACITORS:</span> <span id="stat-shields" style="color: var(--neon-cyan);">50 / 50</span></div>
+                <div class="stat-row"><span>BLASTER OUTPUT:</span> <span id="stat-dmg" style="color: var(--neon-alert);">10 DMG</span></div>
+            </div>
+            <div class="crafting-grid">
+                <div class="blueprint">
+                    <div class="bp-details">
+                        <h4>REINFORCE HULL</h4>
+                        <div class="bp-cost">Cost: 20 Iron, 5 Scrap</div>
+                        <div style="color: #00ffaa; font-size: 0.8rem;">+20 Max HP</div>
+                    </div>
+                    <button onclick="craftUpgrade('hull')">INSTALL</button>
+                </div>
+                <div class="blueprint">
+                    <div class="bp-details">
+                        <h4>UPGRADE BLASTER</h4>
+                        <div class="bp-cost">Cost: 10 Iron, 10 Gold, 10 Scrap</div>
+                        <div style="color: var(--neon-alert); font-size: 0.8rem;">+5 Damage</div>
+                    </div>
+                    <button onclick="craftUpgrade('blaster')">INSTALL</button>
+                </div>
+                <div class="blueprint">
+                    <div class="bp-details">
+                        <h4>SHIELD EMITTERS</h4>
+                        <div class="bp-cost">Cost: 30 Gold, 15 Scrap</div>
+                        <div style="color: var(--neon-cyan); font-size: 0.8rem;">+25 Max Shields</div>
+                    </div>
+                    <button onclick="craftUpgrade('shields')">INSTALL</button>
+                </div>
+                <div class="blueprint">
+                    <div class="bp-details">
+                        <h4>REPAIR HULL (CONSUMABLE)</h4>
+                        <div class="bp-cost">Cost: 10 Iron</div>
+                        <div style="color: #00ffaa; font-size: 0.8rem;">Restores 25 HP</div>
+                    </div>
+                    <button onclick="craftUpgrade('repair')">FABRICATE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-tac" class="spa-view panel">
+        <h3>TACTICAL BAY // COMBAT HUD</h3>
+        <div class="tac-container">
+            <div class="tac-screen">
+                <div class="tac-grid"></div>
+                <div id="tac-idle-text" style="color: #555; font-family: 'Orbitron'; font-size: 2rem; z-index: 2;">NO TARGETS DETECTED</div>
+                
+                <div class="entity-card" id="tac-entity-card" style="display: none;">
+                    <div id="tac-entity-name" style="color: var(--neon-alert); font-size: 1.5rem;">VOID MARAUDER</div>
+                    <div style="font-size: 0.8rem; color: #ccc; margin-top: 5px;">HULL INTEGRITY</div>
+                    <div class="hp-bar-bg"><div class="hp-bar-fill" id="tac-entity-hp"></div></div>
+                </div>
+
+                <div class="tac-controls" id="tac-controls" style="display: none;">
+                    <button class="tac-btn" style="border-color: var(--neon-alert); color: var(--neon-alert);" onclick="tacticalAction('fire')">FIRE BLASTER</button>
+                    <button class="tac-btn" style="border-color: var(--neon-cyan);" onclick="tacticalAction('shield')">RECHARGE SHIELDS</button>
+                </div>
+            </div>
+            <div class="tac-logs" id="tac-logs">
+                <div>[SYS]: Tactical interface online. Awaiting hostile intercepts...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-chat" class="spa-view panel">
+        <h3>ALLIANCE NETWORK // OUT-OF-CHARACTER CHAT</h3>
+        <div style="display: flex; gap: 15px; flex: 1; min-height: 0;">
+            <div style="flex: 3; display: flex; flex-direction: column; border: 1px solid var(--neon-cyan); padding: 15px; background: #000;">
+                <div id="alliance-chat-box">
+                    <div style="color: #555; font-family: 'Share Tech Mono';">[SYS]: Alliance secure channel established. Messages sent here are purely out-of-character text and will be relayed to all connected peers in your group.</div>
+                </div>
+                <div style="display: flex; gap: 10px; flex-shrink: 0; margin-top: auto;">
+                    <input type="text" id="ooc-chat-input" placeholder="Type transmission to group..." style="flex: 1;" onkeypress="if(event.key === 'Enter') sendOOCMessage()">
+                    <button onclick="sendOOCMessage()">SEND MSG</button>
+                </div>
+            </div>
+            <div id="peer-list-container">
+                <div style="font-family: 'Orbitron'; color: var(--neon-magenta); margin-bottom: 10px; font-size: 0.9rem;">CONNECTED PEERS (GROUP)</div>
+                <div id="peer-list" style="font-family: 'Share Tech Mono'; color: #ccc; font-size: 0.8rem;">
+                    <div style="color: #555;">No active links.</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -248,8 +353,7 @@
             <h3 style="color: #fff;">HEX-DECODER MATRIX</h3>
             <div style="color: #888; font-size: 0.8rem; font-family: 'Share Tech Mono';">SELECT MATCHING CONCEPT TO DECRYPT:</div>
             <div class="decoder-target" id="decoder-target-word">???</div>
-            <div class="decoder-grid" id="decoder-grid">
-                </div>
+            <div class="decoder-grid" id="decoder-grid"></div>
             <button class="decoder-close" onclick="closeDecoder()">CANCEL DECRYPTION</button>
         </div>
     </div>
@@ -272,42 +376,52 @@
 
         // --- LOCAL STORAGE STATE ---
         let playerState = {
-            peerId: null,
-            factionName: "",
-            nativeLanguage: {},    
-            knownForeignWords: [], 
-            dictionary: {},
-            inventory: { iron: 100, gold: 50 }, 
-            grammarRule: 0, 
-            tutorialDone: false 
+            peerId: null, factionName: "", nativeLanguage: {}, knownForeignWords: [], dictionary: {},
+            trueMeanings: {}, 
+            inventory: { iron: 100, gold: 50, scrap: 10 }, 
+            ship: { hp: 100, maxHp: 100, shields: 50, maxShields: 50, damage: 10 }, 
+            fleet: { miners: 0, skimmers: 0 }, 
+            grammarRule: 0, tutorialDone: false 
         };
 
         let peer, connections = [], draftConcepts = []; 
-        let wordBeingDecoded = ""; // Tracks which word the HUD is open for
+        let wordBeingDecoded = "";
+
+        let currentEncounter = null;
+        let combatInterval = null;
+
+        // --- SPA NAVIGATION LOGIC ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.spa-view').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${tabId}`).classList.add('active');
+            document.getElementById(`nav-${tabId}`).classList.add('active');
+            
+            if(tabId === 'tac') {
+                document.getElementById('nav-tac').classList.remove('alert-pulse');
+                document.getElementById('alert-badge').style.display = 'none';
+            }
+            if(tabId === 'chat') {
+                document.getElementById('nav-chat').classList.remove('alert-pulse');
+                document.getElementById('chat-badge').style.display = 'none';
+            }
+        }
 
         // --- SYS-OP TUTORIAL LOGIC ---
         const tutorialSteps = [
             "Welcome Commander. I am SYS-OP. I will guide you through the Babel Protocol interface. Click NEXT to proceed.",
-            "SECTOR RADAR: Your Sector ID is your unique address. Paste an ally's ID into the TARGET box to link terminals.",
-            "DEEP SPACE INTERCEPTS: Even if alone, the radar picks up Ghost Factions every 45 seconds to give you decoding practice.",
-            "ROSETTA DATABANKS: This is the core. When a foreign alien word appears in the terminal, **CLICK IT**. The Hex-Decoder HUD will open. Select what you think the word means.",
-            "TRANSMITTER: To speak, click English concepts. The engine translates it into your generated native language before broadcasting.",
-            "PHYSICAL CARGO: If you transmit 'GIVE' and 'IRON', the system physically deducts 10 Iron from your cargo and beams it to your ally. Good luck."
+            "SPA NAVIGATION: Look at the top bar. You now have COMMS, FLEET COMMAND, ENGINEERING, TACTICAL bays, and ALLIANCE CHAT.",
+            "ALLIANCE CHAT (NEW): Multiple people can connect to a Host ID. You can talk out-of-character in this tab without dealing with alien translations! The Host acts as a relay for the whole group.",
+            "FLEET COMMAND: Your ships mine resources passively. Spend Iron and Gold to buy Auto-Miners to automate your resource generation.",
+            "ROSETTA DATABANKS: Click unknown alien words in the terminal to guess their meaning. If you guess incorrectly, the Matrix will flash RED and reject it!",
+            "TACTICAL ENCOUNTERS: Every 45 seconds, the engine generates an event. If the Tactical tab flashes red, switch over immediately to defend your ship!"
         ];
         let currentTutorialStep = 0;
 
-        function startTutorial() {
-            currentTutorialStep = 0;
-            document.getElementById('tutorial-bot').style.display = 'flex';
-            renderTutorialStep();
-        }
-        function closeTutorial() {
-            document.getElementById('tutorial-bot').style.display = 'none';
-            if (!playerState.tutorialDone) { playerState.tutorialDone = true; saveState(); }
-        }
+        function startTutorial() { currentTutorialStep = 0; document.getElementById('tutorial-bot').style.display = 'flex'; renderTutorialStep(); }
+        function closeTutorial() { document.getElementById('tutorial-bot').style.display = 'none'; if (!playerState.tutorialDone) { playerState.tutorialDone = true; saveState(); } }
         function renderTutorialStep() {
-            const textContainer = document.getElementById('bot-text');
-            textContainer.innerHTML = '';
+            const textContainer = document.getElementById('bot-text'); textContainer.innerHTML = '';
             typeWriterDescramble(textContainer, tutorialSteps[currentTutorialStep]);
             document.getElementById('bot-next-btn').innerText = (currentTutorialStep === tutorialSteps.length - 1) ? "FINISH" : "NEXT";
         }
@@ -316,26 +430,24 @@
 
         // --- INITIALIZATION ---
         function generateRandomString(len) { return Math.random().toString(36).substring(2, len+2); }
-        
         function generateNativeLanguage() {
             let lang = {};
             UNIVERSAL_CONCEPTS.forEach(concept => {
-                let word;
-                do {
-                    word = SYLLABLES[Math.floor(Math.random() * SYLLABLES.length)] + 
-                           SYLLABLES[Math.floor(Math.random() * SYLLABLES.length)];
-                } while (Object.values(lang).includes(word));
+                let word; do { word = SYLLABLES[Math.floor(Math.random() * SYLLABLES.length)] + SYLLABLES[Math.floor(Math.random() * SYLLABLES.length)]; } while (Object.values(lang).includes(word));
                 lang[concept] = word;
-            });
-            return lang;
+            }); return lang;
         }
 
         function loadOrInitializeSave() {
-            const saved = localStorage.getItem('babelLeviathanSaveV2');
+            const saved = localStorage.getItem('babelLeviathanSaveV5');
             let isNewPlayer = false;
             
             if (saved) {
                 playerState = { ...playerState, ...JSON.parse(saved) }; 
+                if(!playerState.ship) playerState.ship = { hp: 100, maxHp: 100, shields: 50, maxShields: 50, damage: 10 };
+                if(playerState.inventory.scrap === undefined) playerState.inventory.scrap = 0;
+                if(!playerState.fleet) playerState.fleet = { miners: 0, skimmers: 0 };
+                if(!playerState.trueMeanings) playerState.trueMeanings = {};
             } else {
                 isNewPlayer = true;
                 playerState.peerId = "sec-" + generateRandomString(6);
@@ -347,31 +459,194 @@
             
             document.getElementById('my-faction-name').innerText = `[${playerState.factionName}]`;
             document.getElementById('my-id').value = playerState.peerId;
-            updateCargoUI();
-            buildConceptBank();
-            buildDecoderGrid();
-            renderDictionaryLog();
+            updateCargoUI(); updateShipStatsUI(); updateFleetUI(); updatePeerListUI();
+            buildConceptBank(); buildDecoderGrid(); renderDictionaryLog();
             
-            setInterval(generateGhostIntercept, 45000); 
+            setInterval(generateRandomEncounter, 45000); 
+            setInterval(farmingLoop, 1000); 
 
             if (isNewPlayer || !playerState.tutorialDone) setTimeout(startTutorial, 1000);
         }
 
-        function saveState() { localStorage.setItem('babelLeviathanSaveV2', JSON.stringify(playerState)); }
+        function saveState() { localStorage.setItem('babelLeviathanSaveV5', JSON.stringify(playerState)); }
+        function wipeUniverse() { if(confirm("CRITICAL WARNING: This will permanently delete your Faction, Language, and Translations. Proceed?")) { localStorage.removeItem('babelLeviathanSaveV5'); location.reload(); } }
 
-        function wipeUniverse() {
-            if(confirm("CRITICAL WARNING: This will permanently delete your Faction, Language, and Translations. Proceed?")) {
-                localStorage.removeItem('babelLeviathanSaveV2');
-                location.reload();
-            }
-        }
-
+        // --- UI UPDATERS ---
         function updateCargoUI() {
             document.getElementById('cargo-iron').innerText = playerState.inventory.iron;
             document.getElementById('cargo-gold').innerText = playerState.inventory.gold;
+            document.getElementById('cargo-scrap').innerText = playerState.inventory.scrap;
         }
 
-        // --- PEER JS NETWORKING ---
+        function updateShipStatsUI() {
+            document.getElementById('stat-hp').innerText = `${playerState.ship.hp} / ${playerState.ship.maxHp}`;
+            document.getElementById('stat-shields').innerText = `${playerState.ship.shields} / ${playerState.ship.maxShields}`;
+            document.getElementById('stat-dmg').innerText = `${playerState.ship.damage} DMG`;
+        }
+
+        // --- FLEET COMMAND (FARMING ENGINE) ---
+        function updateFleetUI() {
+            document.getElementById('stat-miners').innerText = `${playerState.fleet.miners} ACTIVE`;
+            document.getElementById('stat-skimmers').innerText = `${playerState.fleet.skimmers} ACTIVE`;
+            document.getElementById('yield-iron').innerText = playerState.fleet.miners;
+            document.getElementById('yield-gold').innerText = playerState.fleet.skimmers;
+        }
+
+        function buyShip(type) {
+            if(type === 'miner' && playerState.inventory.iron >= 50 && playerState.inventory.scrap >= 10) {
+                playerState.inventory.iron -= 50; playerState.inventory.scrap -= 10;
+                playerState.fleet.miners += 1;
+                updateFleetUI(); updateCargoUI(); saveState();
+                logSys(`[FLEET] Auto-Miner Deployed successfully.`);
+            } else if (type === 'skimmer' && playerState.inventory.gold >= 100 && playerState.inventory.scrap >= 20) {
+                playerState.inventory.gold -= 100; playerState.inventory.scrap -= 20;
+                playerState.fleet.skimmers += 1;
+                updateFleetUI(); updateCargoUI(); saveState();
+                logSys(`[FLEET] Solar Skimmer Deployed successfully.`);
+            } else {
+                alert("Insufficient resources to deploy ship.");
+            }
+        }
+
+        function farmingLoop() {
+            if (playerState.fleet.miners > 0) playerState.inventory.iron += playerState.fleet.miners;
+            if (playerState.fleet.skimmers > 0) playerState.inventory.gold += playerState.fleet.skimmers;
+            
+            if (playerState.fleet.miners > 0 || playerState.fleet.skimmers > 0) {
+                updateCargoUI(); saveState();
+            }
+        }
+
+        // --- ENGINEERING / CRAFTING ENGINE ---
+        function craftUpgrade(type) {
+            let success = false;
+            if(type === 'hull' && playerState.inventory.iron >= 20 && playerState.inventory.scrap >= 5) {
+                playerState.inventory.iron -= 20; playerState.inventory.scrap -= 5;
+                playerState.ship.maxHp += 20; playerState.ship.hp += 20; success = true;
+            } else if(type === 'blaster' && playerState.inventory.iron >= 10 && playerState.inventory.gold >= 10 && playerState.inventory.scrap >= 10) {
+                playerState.inventory.iron -= 10; playerState.inventory.gold -= 10; playerState.inventory.scrap -= 10;
+                playerState.ship.damage += 5; success = true;
+            } else if(type === 'shields' && playerState.inventory.gold >= 30 && playerState.inventory.scrap >= 15) {
+                playerState.inventory.gold -= 30; playerState.inventory.scrap -= 15;
+                playerState.ship.maxShields += 25; playerState.ship.shields += 25; success = true;
+            } else if(type === 'repair' && playerState.inventory.iron >= 10) {
+                if(playerState.ship.hp < playerState.ship.maxHp) {
+                    playerState.inventory.iron -= 10;
+                    playerState.ship.hp = Math.min(playerState.ship.maxHp, playerState.ship.hp + 25); success = true;
+                } else { alert("Hull is already at maximum integrity."); return; }
+            }
+
+            if(success) { saveState(); updateCargoUI(); updateShipStatsUI(); logSys("[ENG] Ship Upgrade Successful."); } 
+            else { alert("Insufficient resources to fabricate."); }
+        }
+
+        // --- TACTICAL COMBAT ENGINE ---
+        function generateRandomEncounter() {
+            if(currentEncounter !== null) return; 
+
+            const roll = Math.random();
+            if(roll < 0.5) {
+                generateGhostIntercept();
+            } else if (roll < 0.75) {
+                startCombat({ type: 'asteroid', name: 'RICH ASTEROID', hp: 30, maxHp: 30, dmg: 0, 
+                              reward: { iron: Math.floor(Math.random()*15)+10, gold: Math.floor(Math.random()*5) }, color: '#aaaaaa' });
+            } else {
+                startCombat({ type: 'enemy', name: 'VOID MARAUDER', hp: 50, maxHp: 50, dmg: 8, 
+                              reward: { scrap: Math.floor(Math.random()*15)+5, gold: Math.floor(Math.random()*10) }, color: 'var(--neon-alert)' });
+            }
+        }
+
+        function startCombat(entity) {
+            currentEncounter = entity;
+            document.getElementById('tac-idle-text').style.display = 'none';
+            document.getElementById('tac-entity-card').style.display = 'block';
+            document.getElementById('tac-controls').style.display = 'flex';
+            document.getElementById('tac-entity-name').innerText = entity.name;
+            document.getElementById('tac-entity-name').style.color = entity.color;
+            updateEnemyHpBar();
+
+            logTac(`[ALERT] New entity detected on tactical sensors: ${entity.name}`);
+            document.getElementById('nav-tac').classList.add('alert-pulse');
+            document.getElementById('alert-badge').style.display = 'inline';
+            logSys(`[WARNING] ACTION REQUIRED IN TACTICAL BAY.`);
+
+            if(entity.type === 'enemy') combatInterval = setInterval(enemyAttackTick, 3000);
+            else if (entity.type === 'asteroid') {
+                combatInterval = setInterval(() => {
+                    logTac(`${entity.name} is drifting away...`);
+                    entity.hp -= 2; 
+                    if(entity.hp <= 0) endCombat("Asteroid drifted out of range.");
+                    updateEnemyHpBar();
+                }, 2000);
+            }
+        }
+
+        function tacticalAction(action) {
+            if(!currentEncounter) return;
+
+            if(action === 'fire') {
+                currentEncounter.hp -= playerState.ship.damage;
+                logTac(`Fired Blasters! Dealt ${playerState.ship.damage} DMG.`);
+                updateEnemyHpBar();
+
+                if(currentEncounter.hp <= 0) {
+                    let r = currentEncounter.reward; let msg = `Entity destroyed. Salvaged: `;
+                    if(r.iron) { playerState.inventory.iron += r.iron; msg += `${r.iron} Iron `; }
+                    if(r.gold) { playerState.inventory.gold += r.gold; msg += `${r.gold} Gold `; }
+                    if(r.scrap) { playerState.inventory.scrap += r.scrap; msg += `${r.scrap} Scrap`; }
+                    saveState(); updateCargoUI(); endCombat(msg);
+                }
+            } else if (action === 'shield') {
+                let recharge = 15;
+                playerState.ship.shields = Math.min(playerState.ship.maxShields, playerState.ship.shields + recharge);
+                logTac(`Diverting power. Shields recharged by ${recharge}.`);
+                updateShipStatsUI(); saveState();
+            }
+        }
+
+        function enemyAttackTick() {
+            if(!currentEncounter) return;
+            let dmg = currentEncounter.dmg;
+            logTac(`${currentEncounter.name} fires! Incoming ${dmg} DMG.`);
+
+            if(playerState.ship.shields > 0) {
+                if(playerState.ship.shields >= dmg) { playerState.ship.shields -= dmg; logTac(`Shields absorbed full impact.`); } 
+                else { let remainder = dmg - playerState.ship.shields; playerState.ship.shields = 0; playerState.ship.hp -= remainder; logTac(`Shields failed! Hull took ${remainder} DMG.`); }
+            } else {
+                playerState.ship.hp -= dmg; logTac(`Direct Hull Hit! Took ${dmg} DMG.`);
+            }
+
+            updateShipStatsUI(); saveState();
+
+            if(playerState.ship.hp <= 0) {
+                logTac(`[CRITICAL] HULL BREACH DETECTED. SHIP DESTROYED.`);
+                alert("YOUR SHIP WAS DESTROYED. Emergency clones activated. You lost 50% of your resources.");
+                playerState.inventory.iron = Math.floor(playerState.inventory.iron / 2);
+                playerState.inventory.gold = Math.floor(playerState.inventory.gold / 2);
+                playerState.inventory.scrap = Math.floor(playerState.inventory.scrap / 2);
+                playerState.ship.hp = playerState.ship.maxHp; playerState.ship.shields = playerState.ship.maxShields;
+                saveState(); updateCargoUI(); updateShipStatsUI(); endCombat("Emergency Evacuation complete. Target lost.");
+            }
+        }
+
+        function updateEnemyHpBar() {
+            if(!currentEncounter) return;
+            const pct = Math.max(0, (currentEncounter.hp / currentEncounter.maxHp) * 100);
+            document.getElementById('tac-entity-hp').style.width = `${pct}%`;
+        }
+
+        function endCombat(msg) {
+            logTac(msg); clearInterval(combatInterval); currentEncounter = null;
+            document.getElementById('tac-idle-text').style.display = 'block';
+            document.getElementById('tac-entity-card').style.display = 'none';
+            document.getElementById('tac-controls').style.display = 'none';
+            document.getElementById('nav-tac').classList.remove('alert-pulse');
+            document.getElementById('alert-badge').style.display = 'none';
+        }
+
+        function logTac(msg) { const logs = document.getElementById('tac-logs'); logs.innerHTML += `<div>[TAC]: ${msg}</div>`; logs.scrollTop = logs.scrollHeight; }
+
+        // --- OLDER SYSTEMS & ALLIANCE CHAT (PEERJS, COMMS, DICTIONARY) ---
         function initNetwork() {
             peer = new Peer(playerState.peerId);
             peer.on('open', id => logSys(`Sector ID active. Frequency ${id}`));
@@ -382,36 +657,72 @@
         function connectToPeer() {
             const targetId = document.getElementById('target-id').value.trim();
             if(!targetId || targetId === playerState.peerId) return;
-            logSys(`Initiating jump to Sector ${targetId}...`);
-            const conn = peer.connect(targetId);
-            setupConnection(conn);
+            logSys(`Initiating jump to Sector ${targetId}...`); const conn = peer.connect(targetId); setupConnection(conn);
+        }
+
+        function updatePeerListUI() {
+            const list = document.getElementById('peer-list');
+            if (connections.length === 0) { list.innerHTML = '<div style="color: #555;">No active links.</div>'; return; }
+            list.innerHTML = '';
+            connections.forEach(c => { list.innerHTML += `<div>> LINKED: [${c.peer.substring(0,8)}...]</div>`; });
         }
 
         function setupConnection(conn) {
             conn.on('open', () => {
-                connections.push(conn);
+                connections.push(conn); updatePeerListUI();
                 logSys(`Link established. Requesting telemetry...`);
                 conn.send({ type: 'handshake', faction: playerState.factionName });
             });
             conn.on('data', data => {
                 if(data.type === 'handshake') logSys(`Telemetry: Sector belongs to [${data.faction}].`);
-                if(data.type === 'message') handleIncomingTransmission(data.faction, data.words, 'msg-foreign', data.grammarRule, data.transfers);
+                if(data.type === 'message') handleIncomingTransmission(data.faction, data.payload, 'msg-foreign', data.transfers);
+                
+                // NEW: Handle out-of-character Alliance Chat Group Mesh Relay
+                if(data.type === 'ooc_chat') {
+                    receiveOOCMessage(data.faction, data.text);
+                    // RELAY FEATURE: If you are the host (you have multiple connections), pass it on so everyone sees it!
+                    connections.forEach(c => {
+                        if(c.peer !== conn.peer) {
+                            c.send({ type: 'ooc_chat', faction: data.faction, text: data.text });
+                        }
+                    });
+                }
             });
-            conn.on('close', () => { connections = connections.filter(c => c.peer !== conn.peer); logSys(`Connection lost.`); });
+            conn.on('close', () => { 
+                connections = connections.filter(c => c.peer !== conn.peer); 
+                updatePeerListUI(); logSys(`Connection lost.`); 
+            });
         }
 
-        // --- MESSAGING SYSTEM ---
+        // --- NEW: ALLIANCE CHAT (OOC) FUNCTIONS ---
+        function sendOOCMessage() {
+            const input = document.getElementById('ooc-chat-input');
+            const text = input.value.trim();
+            if(!text || connections.length === 0) return;
+            
+            connections.forEach(conn => conn.send({ type: 'ooc_chat', faction: playerState.factionName, text: text }));
+            receiveOOCMessage("YOU", text, 'var(--neon-cyan)');
+            input.value = '';
+        }
+
+        function receiveOOCMessage(faction, text, color = 'var(--neon-magenta)') {
+            const box = document.getElementById('alliance-chat-box');
+            box.innerHTML += `<div class="ooc-msg"><span style="color: ${color}; font-weight: bold;">[${faction}]:</span> <span style="color: #ccc;">${text}</span></div>`;
+            box.scrollTop = box.scrollHeight;
+
+            if(!document.getElementById('view-chat').classList.contains('active')) {
+                document.getElementById('nav-chat').classList.add('alert-pulse');
+                document.getElementById('chat-badge').style.display = 'inline';
+            }
+        }
+
         function buildConceptBank() {
             const bank = document.getElementById('concept-bank');
             UNIVERSAL_CONCEPTS.forEach(concept => {
-                const btn = document.createElement('button');
-                btn.className = 'concept-btn';
-                btn.innerText = concept.toUpperCase();
-                btn.onclick = () => { draftConcepts.push(concept); updateDraftUI(); };
-                bank.appendChild(btn);
+                const btn = document.createElement('button'); btn.className = 'concept-btn'; btn.innerText = concept.toUpperCase();
+                btn.onclick = () => { draftConcepts.push(concept); updateDraftUI(); }; bank.appendChild(btn);
             });
         }
-
         function updateDraftUI() { document.getElementById('draft-message').innerText = draftConcepts.length > 0 ? draftConcepts.join(" ") : "_"; }
         function clearDraft() { draftConcepts = []; updateDraftUI(); }
 
@@ -421,193 +732,152 @@
             
             if(draftConcepts.includes("give") && draftConcepts.includes("iron")) {
                 if(playerState.inventory.iron >= 10) { playerState.inventory.iron -= 10; transfers.iron = 10; }
-                else { logSys("ERROR: Insufficient Iron for transfer."); clearDraft(); return; }
+                else { logSys("ERROR: Insufficient Iron."); clearDraft(); return; }
             }
             if(draftConcepts.includes("give") && draftConcepts.includes("gold")) {
                 if(playerState.inventory.gold >= 5) { playerState.inventory.gold -= 5; transfers.gold = 5; }
-                else { logSys("ERROR: Insufficient Gold for transfer."); clearDraft(); return; }
+                else { logSys("ERROR: Insufficient Gold."); clearDraft(); return; }
             }
 
-            let alienPayload = draftConcepts.map(c => {
+            let payload = draftConcepts.map(c => {
                 let word = playerState.nativeLanguage[c];
-                if(c === "danger") word = word.toUpperCase() + "!";
-                return word;
+                if(c === "danger") word = word.toUpperCase() + "!"; 
+                if(playerState.grammarRule === 2) word = word.includes("!") ? word : `${word}-${word}`;
+                return { trueConcept: c, alienWord: word };
             });
-            
-            if(playerState.grammarRule === 1) alienPayload.reverse(); 
-            if(playerState.grammarRule === 2) alienPayload = alienPayload.map(w => w.includes("!") ? w : `${w}-${w}`); 
+            if(playerState.grammarRule === 1) payload.reverse(); 
 
-            connections.forEach(conn => conn.send({ type: 'message', faction: playerState.factionName, words: alienPayload, grammarRule: playerState.grammarRule, transfers: transfers }));
-
-            updateCargoUI();
-            saveState();
-
+            connections.forEach(conn => conn.send({ type: 'message', faction: playerState.factionName, payload: payload, transfers: transfers }));
+            updateCargoUI(); saveState();
             const term = document.getElementById('terminal');
             term.innerHTML += `<div class="msg-local">[YOU]: ${draftConcepts.join(" ").toUpperCase()}</div>`;
-            term.scrollTop = term.scrollHeight;
-            clearDraft();
+            term.scrollTop = term.scrollHeight; clearDraft();
         }
 
         function typeWriterDescramble(container, htmlString) {
-            const temp = document.createElement('div');
-            temp.innerHTML = htmlString;
-            let delay = 0;
+            const temp = document.createElement('div'); temp.innerHTML = htmlString; let delay = 0;
             Array.from(temp.childNodes).forEach(node => {
-                const wrapper = document.createElement('span');
-                wrapper.className = 'descramble';
-                wrapper.style.animationDelay = `${delay}s`;
-                if (node.nodeType === Node.TEXT_NODE) wrapper.innerText = node.textContent;
-                else wrapper.appendChild(node.cloneNode(true));
-                container.appendChild(wrapper);
-                delay += 0.08; 
+                const wrapper = document.createElement('span'); wrapper.className = 'descramble'; wrapper.style.animationDelay = `${delay}s`;
+                if (node.nodeType === Node.TEXT_NODE) wrapper.innerText = node.textContent; else wrapper.appendChild(node.cloneNode(true));
+                container.appendChild(wrapper); delay += 0.08; 
             });
         }
 
-        function handleIncomingTransmission(senderFaction, alienWords, msgClass, senderGrammar, transfers = null) {
+        function handleIncomingTransmission(senderFaction, payloadObjs, msgClass, transfers = null) {
             let updatedDict = false;
-            alienWords.forEach(word => {
+            let innerHtmlBuilder = `[${senderFaction}]: `;
+
+            payloadObjs.forEach(obj => {
+                const word = obj.alienWord;
+                const truth = obj.trueConcept;
                 const cleanWord = word.replace(/[^a-zA-Z]/g, '').toLowerCase(); 
-                if(cleanWord && !playerState.knownForeignWords.includes(cleanWord)) {
-                    playerState.knownForeignWords.push(cleanWord);
-                    updatedDict = true;
+                
+                if(cleanWord && !playerState.knownForeignWords.includes(cleanWord)) { 
+                    playerState.knownForeignWords.push(cleanWord); 
+                    updatedDict = true; 
                 }
+
+                if(truth) playerState.trueMeanings[cleanWord] = truth;
+
+                const translation = playerState.dictionary[cleanWord];
+                let displayWord = translation ? translation.toUpperCase() : word;
+                let cssClass = translation ? "alien-word translated" : "alien-word";
+                if(word.includes("!") || word === word.toUpperCase()) cssClass += " danger-word"; 
+
+                if(truth === null) innerHtmlBuilder += `${word} `;
+                else innerHtmlBuilder += `<span class="${cssClass}" data-raw="${cleanWord}" onclick="openDecoder('${cleanWord}')">${displayWord}</span> `;
             });
+
             if(updatedDict) saveState(); 
 
             if(transfers && (transfers.iron > 0 || transfers.gold > 0)) {
                 if(transfers.iron > 0) playerState.inventory.iron += transfers.iron;
                 if(transfers.gold > 0) playerState.inventory.gold += transfers.gold;
-                updateCargoUI(); saveState();
-                logSys(`[SYS] PHYSICAL TRANSFER RECEIVED: ${transfers.iron} Iron, ${transfers.gold} Gold.`);
+                updateCargoUI(); saveState(); logSys(`[SYS] PHYSICAL TRANSFER RECEIVED: ${transfers.iron} Iron, ${transfers.gold} Gold.`);
             }
 
-            const term = document.getElementById('terminal');
-            const div = document.createElement('div');
-            div.className = msgClass;
-            
-            let innerHtmlBuilder = `[${senderFaction}]: `;
-            
-            alienWords.forEach(word => {
-                const cleanWord = word.replace(/[^a-zA-Z]/g, '').toLowerCase();
-                const translation = playerState.dictionary[cleanWord];
-                let displayWord = translation ? translation.toUpperCase() : word;
-                
-                let cssClass = translation ? "alien-word translated" : "alien-word";
-                if(word.includes("!") || word === word.toUpperCase()) cssClass += " danger-word"; 
-
-                // NEW: We embed the raw alien word in data-raw for the click-to-decode system
-                innerHtmlBuilder += `<span class="${cssClass}" data-raw="${cleanWord}" onclick="openDecoder('${cleanWord}')">${displayWord}</span> `;
-            });
-
-            typeWriterDescramble(div, innerHtmlBuilder);
-            term.appendChild(div);
-            term.scrollTop = term.scrollHeight;
+            const term = document.getElementById('terminal'); const div = document.createElement('div'); div.className = msgClass;
+            typeWriterDescramble(div, innerHtmlBuilder); term.appendChild(div); 
+            setTimeout(() => { term.scrollTop = term.scrollHeight; }, 100); 
         }
 
-        // --- THE OVERHAULED DECODER SYSTEM ---
         function buildDecoderGrid() {
             const grid = document.getElementById('decoder-grid');
             UNIVERSAL_CONCEPTS.forEach(concept => {
-                const btn = document.createElement('button');
-                btn.className = 'decode-btn';
-                btn.innerText = concept.toUpperCase();
-                btn.onclick = () => lockTranslation(concept);
-                grid.appendChild(btn);
+                const btn = document.createElement('button'); btn.className = 'decode-btn'; btn.innerText = concept.toUpperCase();
+                btn.onclick = () => lockTranslation(concept); grid.appendChild(btn);
             });
-            // Add an "Unknown" button to clear a guess
-            const clearBtn = document.createElement('button');
-            clearBtn.className = 'decode-btn';
-            clearBtn.style.borderColor = '#ff3333';
-            clearBtn.innerText = "[CLEAR]";
-            clearBtn.onclick = () => lockTranslation(null);
-            grid.appendChild(clearBtn);
+            const clearBtn = document.createElement('button'); clearBtn.className = 'decode-btn'; clearBtn.style.borderColor = '#ff3333';
+            clearBtn.innerText = "[CLEAR]"; clearBtn.onclick = () => lockTranslation(null); grid.appendChild(clearBtn);
         }
 
-        function openDecoder(rawWord) {
-            wordBeingDecoded = rawWord;
-            document.getElementById('decoder-target-word').innerText = rawWord.toUpperCase();
-            document.getElementById('decoder-overlay').style.display = 'flex';
-        }
-
-        function closeDecoder() {
-            document.getElementById('decoder-overlay').style.display = 'none';
-        }
-
+        function openDecoder(rawWord) { wordBeingDecoded = rawWord; document.getElementById('decoder-target-word').innerText = rawWord.toUpperCase(); document.getElementById('decoder-target-word').style.color = "var(--neon-magenta)"; document.getElementById('decoder-overlay').style.display = 'flex'; }
+        function closeDecoder() { document.getElementById('decoder-overlay').style.display = 'none'; }
+        
         function lockTranslation(concept) {
             if(concept === null) {
                 delete playerState.dictionary[wordBeingDecoded];
             } else {
+                const trueMeaning = playerState.trueMeanings[wordBeingDecoded];
+                
+                if (trueMeaning && concept !== trueMeaning) {
+                    document.getElementById('decoder-target-word').innerText = "DECRYPTION FAILED";
+                    document.getElementById('decoder-target-word').style.color = "var(--neon-alert)";
+                    logSys(`[ERROR] Decryption mismatch. Rejected.`);
+                    setTimeout(() => { 
+                        if(document.getElementById('decoder-overlay').style.display === 'flex') {
+                            document.getElementById('decoder-target-word').innerText = wordBeingDecoded.toUpperCase();
+                            document.getElementById('decoder-target-word').style.color = "var(--neon-magenta)";
+                        }
+                    }, 1500);
+                    return; 
+                }
+
                 playerState.dictionary[wordBeingDecoded] = concept;
+                logSys(`[SYS] Translation confirmed: ${wordBeingDecoded.toUpperCase()} means ${concept.toUpperCase()}`);
             }
-            saveState();
-            closeDecoder();
-            
-            // Seamlessly update the terminal without breaking animations
-            refreshTerminalTranslations();
-            renderDictionaryLog();
+            saveState(); closeDecoder(); refreshTerminalTranslations(); renderDictionaryLog();
         }
 
         function refreshTerminalTranslations() {
-            // Find all alien words in the terminal using the hidden data-raw attribute
-            const spans = document.querySelectorAll('.alien-word');
-            spans.forEach(span => {
+            document.querySelectorAll('.alien-word').forEach(span => {
                 const rawWord = span.getAttribute('data-raw');
-                if(playerState.dictionary[rawWord]) {
-                    span.innerText = playerState.dictionary[rawWord].toUpperCase();
-                    span.classList.add('translated');
-                } else {
-                    span.innerText = rawWord; // revert if cleared
-                    span.classList.remove('translated');
-                }
+                if(playerState.dictionary[rawWord]) { span.innerText = playerState.dictionary[rawWord].toUpperCase(); span.classList.add('translated'); } 
+                else { span.innerText = rawWord; span.classList.remove('translated'); }
             });
         }
 
         function renderDictionaryLog() {
-            const list = document.getElementById('dict-list');
-            list.innerHTML = '';
-            
-            let decodedCount = 0;
-            
-            // Show only concepts we have successfully mapped
+            const list = document.getElementById('dict-list'); list.innerHTML = ''; let decodedCount = 0;
             Object.keys(playerState.dictionary).forEach(alienWord => {
-                decodedCount++;
-                const div = document.createElement('div');
-                div.className = 'dict-log-entry';
-                div.innerHTML = `
-                    <span class="dict-log-alien">${alienWord.toUpperCase()}</span>
-                    <span>=></span>
-                    <span class="dict-log-english">${playerState.dictionary[alienWord].toUpperCase()}</span>
-                `;
+                decodedCount++; const div = document.createElement('div'); div.className = 'dict-log-entry';
+                div.innerHTML = `<span class="dict-log-alien">${alienWord.toUpperCase()}</span><span>=></span><span class="dict-log-english">${playerState.dictionary[alienWord].toUpperCase()}</span>`;
                 list.appendChild(div);
             });
-            
             document.getElementById('dict-progress').innerText = `${decodedCount} / ${UNIVERSAL_CONCEPTS.length} DECODED`;
         }
 
-        // --- SINGLE PLAYER GHOST INTERCEPTS ---
         function generateGhostIntercept() {
             const ghostPrefix = FACTION_PREFIXES[Math.floor(Math.random()*FACTION_PREFIXES.length)];
-            const length = Math.floor(Math.random() * 3) + 2;
-            let words = [];
+            const length = Math.floor(Math.random() * 3) + 2; let payload = [];
             for(let i=0; i<length; i++) {
+                const realConcept = UNIVERSAL_CONCEPTS[Math.floor(Math.random()*UNIVERSAL_CONCEPTS.length)];
                 let fakeWord = SYLLABLES[Math.floor(Math.random()*SYLLABLES.length)] + SYLLABLES[Math.floor(Math.random()*SYLLABLES.length)];
-                if(Math.random() < 0.3) words.push("<span class='corrupted'>[ERR_0x99]</span>");
-                else words.push(fakeWord);
+                
+                if(Math.random() < 0.3) payload.push({ trueConcept: null, alienWord: "<span class='corrupted'>[ERR_0x99]</span>" }); 
+                else payload.push({ trueConcept: realConcept, alienWord: fakeWord });
             }
-            handleIncomingTransmission(`GHOST-${ghostPrefix}`, words, 'msg-ghost', 0);
+            handleIncomingTransmission(`GHOST-${ghostPrefix}`, payload, 'msg-ghost');
+            logSys("[ALERT] GHOST SIGNAL INTERCEPTED ON COMMS.");
         }
 
-        function logSys(msg) {
-            const term = document.getElementById('terminal');
-            term.innerHTML += `<div class="msg-sys">${msg}</div>`;
-            term.scrollTop = term.scrollHeight;
+        function logSys(msg) { 
+            const term = document.getElementById('terminal'); 
+            term.innerHTML += `<div class="msg-sys">${msg}</div>`; 
+            setTimeout(() => { term.scrollTop = term.scrollHeight; }, 50);
         }
 
-        // --- RADAR ANIMATION ---
-        const canvas = document.getElementById('radar');
-        const ctx = canvas.getContext('2d');
-        let radarAngle = 0;
-
+        const canvas = document.getElementById('radar'); const ctx = canvas.getContext('2d'); let radarAngle = 0;
         function resizeCanvas() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
         window.addEventListener('resize', resizeCanvas);
         
@@ -615,8 +885,7 @@
             requestAnimationFrame(drawRadar);
             ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             const cx = canvas.width / 2; const cy = canvas.height / 2; const radius = Math.min(cx, cy) - 10;
-            ctx.strokeStyle = 'rgba(0, 255, 255, 0.2)';
-            ctx.beginPath(); ctx.arc(cx, cy, radius * 0.5, 0, Math.PI*2); ctx.stroke();
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.2)'; ctx.beginPath(); ctx.arc(cx, cy, radius * 0.5, 0, Math.PI*2); ctx.stroke();
             ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI*2); ctx.stroke();
             ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI*2); ctx.fill();
 
@@ -626,16 +895,10 @@
                 ctx.fillStyle = 'var(--neon-magenta)'; ctx.beginPath(); ctx.arc(pX, pY, 5, 0, Math.PI*2); ctx.fill();
             });
 
-            radarAngle += 0.03;
-            ctx.strokeStyle = 'var(--neon-cyan)';
-            ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(radarAngle) * radius, cy + Math.sin(radarAngle) * radius); ctx.stroke();
+            radarAngle += 0.03; ctx.strokeStyle = 'var(--neon-cyan)'; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(radarAngle) * radius, cy + Math.sin(radarAngle) * radius); ctx.stroke();
         }
 
-        // --- BOOT SEQUENCE ---
-        loadOrInitializeSave();
-        initNetwork();
-        setTimeout(resizeCanvas, 100);
-        drawRadar();
+        loadOrInitializeSave(); initNetwork(); setTimeout(resizeCanvas, 100); drawRadar();
     </script>
 </body>
 </html>
